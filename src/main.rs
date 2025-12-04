@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use regex::Regex;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -15,6 +16,9 @@ fn main() {
     //parse commmand line arguments
     let args = Args::parse();
 
+    //setup regex
+    let re = Regex::new(&args.pattern).unwrap();
+
     //open file    
     let file = File::open(args.file_path).unwrap();
     //create read buffer
@@ -22,7 +26,7 @@ fn main() {
 
     //iterate through file looking for patter
     for line in reader.lines() {
-        if line.as_ref().expect("error").contains(&args.pattern) {
+        if re.is_match(line.as_ref().unwrap()) {
             println!("{}", line.expect("error"));
         }
     }
