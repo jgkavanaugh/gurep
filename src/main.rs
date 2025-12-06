@@ -1,31 +1,37 @@
 use clap::Parser;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{self, Read, BufRead, BufReader};
 use regex::Regex;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    //pattern to look for
+    /// Pattern to look for
     pattern: String,
-    //path to file
-    file_path: String,
+    /// Path to file
+    file_path: Option<String>,
 }
 
-fn main() {
+fn line_reader(path: &Option<String>) -> io::Result<BufReader<Box<dyn Read>>> {
+    let file: Box<dyn Read> = match path {
+        Some(p) => Box::new(File::open(p)?),
+        None => Box::new(io::stdin()),
+    };
+    Ok(BufReader::new(file))
+}
+
+fn main() {   
     //parse commmand line arguments
     let args = Args::parse();
+
+    //setup reader
+    let reader = line_reader(&args.file_path);
 
     //setup regex
     let re = Regex::new(&args.pattern).unwrap();
 
-    //open file    
-    let file = File::open(args.file_path).unwrap();
-    //create read buffer
-    let reader = BufReader::new(file);
-
-    //iterate through file looking for patter
-    for line in reader.lines() {
+    //iterate through file looking for pattern
+    for line in reader.expect("Erorred reading line").lines() {
         if re.is_match(line.as_ref().unwrap()) {
             println!("{}", line.expect("error"));
         }
