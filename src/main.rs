@@ -31,7 +31,7 @@ fn main() {
     let re = Regex::new(&args.pattern).unwrap();
 
     //iterate through file looking for pattern
-    for line in reader.expect("Erorred reading line").lines() {
+    for line in reader.expect("Errored reading line").lines() {
         if re.is_match(line.as_ref().unwrap()) {
             println!("{}", line.expect("error"));
         }
