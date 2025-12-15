@@ -18,9 +18,10 @@ struct Args {
     case_insensitive: bool,
     ///Invert match
     #[arg(short, long)]
-    invert_math: bool,
-    //stop after N matches
-    //m: ,
+    invert_match: bool,
+    ///Stop after N matches
+    #[arg(short, long)]
+    max_count: Option<u32>,
     //print line numbers
     //n: ,
 }
@@ -51,19 +52,33 @@ fn main() {
     //setup regex
     let re = setup_regex(&args.pattern, args.case_insensitive);
 
-    //iterate through file looking for pattern
-    if args.invert_math {
-        for line in reader.expect("Errored reading line").lines() {
-            if !re.is_match(line.as_ref().unwrap()) {
+    //iterate through file looking for pattern; setting the max match number first if needed
+    let max = match args.max_count {
+        Some(cnt) => cnt,
+        None => 0,
+    };
+
+    let max_enable = args.max_count.is_some();
+
+    let mut count = 1;
+
+    for line in reader.expect("Errored reading line").lines() {
+        let is_match = re.is_match(line.as_ref().unwrap());
+        
+        if args.invert_match {
+            if !is_match {
+                count+=1;
+                println!("{}", line.expect("error"));
+            }
+        } else {
+            if is_match {
+                count+=1;
                 println!("{}", line.expect("error"));
             }
         }
-    }
-    else {
-        for line in reader.expect("Errored reading line").lines() {
-            if re.is_match(line.as_ref().unwrap()) {
-                println!("{}", line.expect("error"));
-            }
+        
+        if count > max && max_enable {
+            break;
         }
     }
 }
